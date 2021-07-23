@@ -4,7 +4,6 @@ from collections import deque
 from inspect import iscoroutinefunction
 from ipaddress import ip_address
 
-from uvicorn import run
 from typing import Callable, Generic, TypeVar
 
 from .constants import (
@@ -372,7 +371,7 @@ class Router(object):
     
     def ONCE(self, func):
         self.initializers.add(func)
-    
+
     async def finalize(self):
         if self.finalized: return
         self.finalized = True
