@@ -1,0 +1,29 @@
+{
+  "name": "routerling",
+  "version": "0.0.2",
+  "description": "Routerling is a simple and fast router for Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests/test_comprehensive.js"
+  },
+  "keywords": [
+    "router",
+    "nodejs",
+    "fast",
+    "simple"
+  ],
+  "author": "Tersoo Ortserga",
+  "license": "MIT",
+  "dependencies": {
+    "cookie": "^1.1.1",
+    "formidable": "^3.5.4",
+    "mime-types": "^3.0.2",
+    "nunjucks": "^3.2.4",
+    "ws": "^8.19.0"
+  },
+  "type": "module",
+  "devDependencies": {
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.26"
+  }
+}
