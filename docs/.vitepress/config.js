@@ -3,7 +3,6 @@ export default {
   description: 'A simple, fast, and feature-rich router for Node.js',
   base: '/routerling/',
   themeConfig: {
-    logo: '/logo.svg',
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Features', link: '/guide/middleware' },
