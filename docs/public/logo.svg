@@ -1,0 +1,30 @@
+<svg width="400" height="120" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(10, 10)">
+    <rect width="100" height="100" rx="20" fill="url(#brandGradient)" />
+    
+    <path d="M30 35 L70 35 L70 50 L45 50 C40 50 35 55 35 60 L35 75 L70 75" 
+          fill="none" 
+          stroke="white" 
+          stroke-width="8" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+    
+    <circle cx="30" cy="35" r="5" fill="white" />
+    <circle cx="70" cy="75" r="5" fill="white" />
+  </g>
+
+  <text x="125" y="75" style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 48px; font-weight: 300; fill: #1e293b;">
+    router<tspan style="font-weight: 700; fill: #6366f1;">ling</tspan>
+  </text>
+  
+  <text x="127" y="98" style="font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 2px; fill: #94a3b8; text-transform: uppercase;">
+    The Lightweight Node.js Router
+  </text>
+</svg>
