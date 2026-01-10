@@ -1,6 +1,10 @@
 # Routerling
 
+[![Documentation](https://img.shields.io/badge/Documentation-View_Site-green)](https://rayattack.github.io/routerling/)
+
 A simple, fast, and powerful web framework for Node.js with built-in WebSocket support, lifecycle hooks, and daemon processes.
+
+**[📚 Read the Documentation](https://rayattack.github.io/routerling/)**
 
 ## Features
 
