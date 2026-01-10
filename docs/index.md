@@ -11,7 +11,7 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: View on GitHub
-      link: https://github.com/tersoo/routerling
+      link: https://github.com/rayattack/routerling
 
 features:
   - title: 🚀 High Performance

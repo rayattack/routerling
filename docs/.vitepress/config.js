@@ -6,7 +6,7 @@ export default {
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Features', link: '/guide/middleware' },
-      { text: 'GitHub', link: 'https://github.com/tersoo/routerling' }
+      { text: 'GitHub', link: 'https://github.com/rayattack/routerling' }
     ],
     sidebar: [
       {
@@ -35,7 +35,7 @@ export default {
       }
     ],
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/tersoo/routerling' }
+      { icon: 'github', link: 'https://github.com/rayattack/routerling' }
     ],
     footer: {
       message: 'Released under the MIT License.',
