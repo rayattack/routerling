@@ -1,8 +1,9 @@
 export default {
   title: 'Routerling',
   description: 'A simple, fast, and feature-rich router for Node.js',
+  base: '/routerling/',
   themeConfig: {
-    logo: '/logo.svg', // Assumes you might have a logo, or we can omit
+    logo: '/logo.svg',
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Features', link: '/guide/middleware' },
