@@ -394,6 +394,14 @@ export class Router {
       }
     }
 
+    // Merge Metadata (SCHEMAS)
+    for (const [key, config] of router._metadata.entries()) {
+      const [method, subdomain, path] = key.split('|');
+      const finalPath = prefix ? (prefix + path).replace('//', '/') : path;
+      const finalKey = `${method}|${subdomain}|${finalPath}`;
+      this._metadata.set(finalKey, config);
+    }
+
     // Merge Initializers (startup hooks)
     if (router.initializers && router.initializers.length > 0) {
       this.initializers.push(...router.initializers);

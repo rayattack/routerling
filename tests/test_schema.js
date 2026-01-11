@@ -115,10 +115,59 @@ async function testSchemaOutputValidation() {
   assert(JSON.parse(mockRes.body).error === 'Internal Server Error', 'Output validation stopped the response');
 }
 
+async function testMountedSchemas() {
+  console.log('\n--- Testing Mounted Router Schemas ---');
+  const app = new Router();
+  const v1 = new Router();
+
+  // 1. Register route on child router
+  v1.POST('/login', (req, res) => {
+    res.body = { authenticated: true };
+  });
+
+  // 2. Register schema on child router
+  v1.SCHEMA.POST('/login', {
+    expects: (data) => !data.password ? { problems: 'Password required' } : { data },
+    failOnInput: true
+  });
+
+  // 3. Mount child to parent with prefix
+  app.mount(v1, true, '/api/v1');
+
+  // Bridge mock body
+  app.use('/*', async (req, res, ctx) => {
+    if (req._req.body) req.body = req._req.body;
+  });
+
+  // 4. Bake parent
+  await app._bakeSchemas();
+
+  // Test Valid
+  const validReq = createMockRequest({
+    method: 'POST',
+    url: '/api/v1/login',
+    body: { password: 'password123' }
+  });
+  const validRes = createMockResponse();
+  await app.handle(validReq, validRes);
+  assert(validRes.statusCode === 200, 'Mounted route with schema passed validation');
+
+  // Test Invalid
+  const invalidReq = createMockRequest({
+    method: 'POST',
+    url: '/api/v1/login',
+    body: { user: 'admin' }
+  });
+  const invalidRes = createMockResponse();
+  await app.handle(invalidReq, invalidRes);
+  assert(invalidRes.statusCode === 422, 'Mounted route correctly aborted invalid request');
+}
+
 async function run() {
   try {
     await testSchemaValidation();
     await testSchemaOutputValidation();
+    await testMountedSchemas();
     console.log(`\nTests finished: ${passed} passed, ${failed} failed`);
     if (failed > 0) process.exit(1);
     process.exit(0);
