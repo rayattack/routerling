@@ -50,6 +50,7 @@ export class Router {
     this._server = null;
     this._errorHandler = null;
     this._staticHandler = null;
+    this._metadata = new Map(); // Store SCHEMA metadata
   }
 
   /**
@@ -166,6 +167,7 @@ export class Router {
     });
 
     this._server.listen(port, hostname, async () => {
+      this._bakeSchemas(); // Automatic Baking Phase
       await this._register(); // Run startup hooks
       await this.runDaemons(); // Run daemons
 
@@ -636,6 +638,69 @@ export class Router {
     });
 
     return this;
+  }
+
+  /**
+   * Internal method to "bake" schemas by wrapping handlers with validation logic.
+   * Runs just before the server starts listening.
+   */
+  async _bakeSchemas() {
+    if (this._metadata.size === 0) return;
+
+    const { createValidationInterceptor } = await import('./validation.js');
+
+    for (const [key, schemaConfig] of this._metadata.entries()) {
+      const [method, subdomain, path] = key.split('|');
+
+      const engine = this.subdomains.get(subdomain);
+      if (!engine) continue;
+
+      // Check if route exists in cache
+      const cached = engine.cache.get(method)?.get(path);
+      if (!cached) {
+        console.warn(`[Routerling Warning]: SCHEMA defined for ${method} ${path} but route does not exist.`);
+        continue;
+      }
+
+      const interceptor = createValidationInterceptor(schemaConfig);
+      const originalHandler = cached.handler;
+      const bakedHandler = interceptor(originalHandler);
+
+      // Update the tree with the baked version
+      engine.updateHandler(method, path, bakedHandler);
+    }
+  }
+
+  /**
+   * Registry for schemas and documentation metadata.
+   * Supports sidecar architecture (defining schemas separate from routes).
+   */
+  get SCHEMA() {
+    const self = this;
+    const registrar = {};
+
+    METHODS.forEach(method => {
+      registrar[method] = (path, config, subdomain = DEFAULT) => {
+        // Support schema-only definition or inline (if handler provided)
+        // If 3 arguments provided and last is function, treat as (path, config, handler)
+        let handler = null;
+        if (arguments.length === 3 && typeof subdomain === 'function') {
+          handler = subdomain;
+          subdomain = DEFAULT;
+        }
+
+        const key = `${method}|${subdomain}|${path}`;
+        self._metadata.set(key, config);
+
+        if (handler) {
+          self.abettor(method, path, handler, subdomain);
+        }
+
+        return self;
+      };
+    });
+
+    return registrar;
   }
 }
 

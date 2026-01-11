@@ -13,7 +13,8 @@ export default {
         text: 'Introduction',
         items: [
           { text: 'Getting Started', link: '/guide/getting-started' },
-          { text: 'Routing Basics', link: '/guide/routing' }
+          { text: 'Routing Basics', link: '/guide/routing' },
+          { text: 'Schema Validation', link: '/guide/schema' }
         ]
       },
       {

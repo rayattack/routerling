@@ -160,6 +160,54 @@ export class Routes {
   }
 
   /**
+   * Update the handler for an existing route.
+   * Useful for the "baking" phase where we wrap original handlers with validation.
+   */
+  updateHandler(method, route, newHandler) {
+    const segments = route.split('/').filter(segment => segment);
+    let currentNode = this.routes.get(method);
+
+    if (!currentNode) return false;
+
+    if (segments.length === 0) {
+      currentNode.handler = newHandler;
+      if (this.cache.get(method).has(route)) {
+        this.cache.get(method).get(route).handler = newHandler;
+      }
+      return true;
+    }
+
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      const isLast = i === segments.length - 1;
+
+      if (segment === '*') {
+        if (currentNode.wildcard) {
+          currentNode.wildcard.handler = newHandler;
+          if (this.cache.get(method).has(route)) {
+            this.cache.get(method).get(route).handler = newHandler;
+          }
+          return true;
+        }
+        return false;
+      }
+
+      const nodeKey = segment.startsWith(':') ? ':' : segment;
+      if (!currentNode.children.has(nodeKey)) return false;
+      currentNode = currentNode.children.get(nodeKey);
+
+      if (isLast) {
+        currentNode.handler = newHandler;
+        if (this.cache.get(method).has(route)) {
+          this.cache.get(method).get(route).handler = newHandler;
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Remove a route from the routing tree
    */
   remove(method, route) {
