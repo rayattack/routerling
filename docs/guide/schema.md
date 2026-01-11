@@ -85,3 +85,32 @@ When a request matches a route with a schema:
 1.  **Input Guard**: The `req.body` is run through `expects`. If it fails and `failOnInput` is true, the request is aborted immediately.
 2.  **Transformation**: If the validator coerces data (e.g., strings to numbers or dates), `req.body` is replaced with the clean, validated version.
 3.  **Output Guard**: After your handler runs, if `returns` is set, the response body is checked. If it fails and `failOnOutput` is true, the status code is flipped to 500 and the response is aborted.
+
+## Automatic API Documentation
+
+Routerling can automatically generate interactive documentation (via Scalar) and an OpenAPI 3.0 specification from your schemas.
+
+### Enabling Documentation
+
+Simply call `DOCS()` on your app instance:
+
+```javascript
+// Serves documentation at /docs
+// Serves OpenAPI JSON at /docs/openapi.json
+await app.DOCS('/docs', {
+  title: 'My Awesome API',
+  version: '1.0.0'
+});
+```
+
+### Accessing the Raw Spec
+
+If you need the raw OpenAPI object (e.g., to save to a file or share with other tools), use `OpenApi()`:
+
+```javascript
+const spec = await app.OpenApi({
+  title: 'My API'
+});
+
+console.log(JSON.stringify(spec, null, 2));
+```

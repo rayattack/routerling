@@ -702,6 +702,52 @@ export class Router {
 
     return registrar;
   }
+
+  /**
+   * Generates the OpenAPI 3.0 specification for the registered routes.
+   * @param {object} options - Info object (title, version, etc.)
+   */
+  async OpenApi(options = {}) {
+    const { generateOpenApiSpec } = await import('./openapi.js');
+    return generateOpenApiSpec(this._metadata, options);
+  }
+
+  /**
+   * Registers documentation routes.
+   * @param {string} docsPath - The URL path to serve documentation (e.g. '/docs')
+   * @param {object} options - Configuration for OpenAPI info
+   */
+  async DOCS(docsPath = '/docs', options = {}) {
+    const jsonPath = docsPath.endsWith('/') ? `${docsPath}openapi.json` : `${docsPath}/openapi.json`;
+
+    // 1. Serve the JSON spec
+    this.GET(jsonPath, async (req, res) => {
+      const spec = await this.OpenApi(options);
+      res.json(spec);
+    });
+
+    // 2. Serve the UI (Scalar)
+    this.GET(docsPath, (req, res) => {
+      const html = `
+<!doctype html>
+<html>
+  <head>
+    <title>${options.title || 'API Reference'}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script
+      id="api-reference"
+      data-url="${jsonPath}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>`;
+      res.html(html);
+    });
+
+    return this;
+  }
 }
 
 // Aliases for the Router class
