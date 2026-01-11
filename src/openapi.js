@@ -109,10 +109,31 @@ function toSchema(validator) {
     return validator.json;
   }
 
-  // 2. Common JS object/primitive fallback
-  if (typeof validator === 'string') return { type: 'string' };
-  if (typeof validator === 'number') return { type: 'number' };
+  // 2. Handle string-based type definitions (e.g. 'string', 'number', 'boolean')
+  if (typeof validator === 'string') {
+    const lower = validator.toLowerCase();
+    if (['string', 'number', 'boolean', 'integer', 'array', 'object'].includes(lower)) {
+      return { type: lower };
+    }
+    return { type: 'string' }; // Default to string for unknown type names
+  }
 
-  // 3. Fallback for unknown / generic objects
+  // 3. Handle numbers and booleans directly
+  if (typeof validator === 'number') return { type: 'number' };
+  if (typeof validator === 'boolean') return { type: 'boolean' };
+
+  // 4. Handle plain objects (recursive)
+  if (typeof validator === 'object' && !Array.isArray(validator)) {
+    const properties = {};
+    for (const [key, value] of Object.entries(validator)) {
+      properties[key] = toSchema(value);
+    }
+    return {
+      type: 'object',
+      properties
+    };
+  }
+
+  // 5. Fallback for unknown / generic objects
   return { type: 'object' };
 }
