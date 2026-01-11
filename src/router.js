@@ -176,16 +176,22 @@ export class Router {
     });
 
     // Handle graceful shutdown
-    process.on('SIGTERM', async () => {
+    // Handle graceful shutdown
+    const shutdown = async (signal) => {
       await this._unregister();
-      this._server.close();
-    });
+      this._server.close(() => {
+        if (signal === 'SIGUSR2') {
+          process.kill(process.pid, 'SIGUSR2');
+        } else {
+          process.exit(0);
+        }
+      });
+    };
 
-    process.on('SIGINT', async () => {
-      await this._unregister();
-      this._server.close();
-      process.exit(0);
-    });
+    process.once('SIGTERM', () => shutdown('SIGTERM'));
+    process.once('SIGINT', () => shutdown('SIGINT'));
+    process.once('SIGHUP', () => shutdown('SIGHUP'));
+    process.once('SIGUSR2', () => shutdown('SIGUSR2'));
 
     return this._server;
   }
@@ -337,7 +343,7 @@ export class Router {
   /**
    * Mount another router
    */
-  mount(router, isolated = true) {
+  mount(router, isolated = true, prefix = '') {
     if (!isolated) {
       // Merge configurations and state
       this._configuration = { ...this._configuration, ...router._configuration };
@@ -345,16 +351,80 @@ export class Router {
     }
 
     // Mount routes from the other router
-    for (const [subdomain, routes] of router.subdomains) {
+    for (const [subdomain, sourceRoutes] of router.subdomains) {
       if (!this.subdomains.has(subdomain)) {
         this.subdomains.set(subdomain, new Routes());
       }
-      // In a full implementation, you'd merge the route trees
-      // For now, we'll just reference the routes
-      this.subdomains.set(subdomain, routes);
+
+      const targetRoutes = this.subdomains.get(subdomain);
+
+      // Merge route trees
+      // We iterate through all methods and manually register the handler to the new router
+      // This ensures that the route structures are properly merged rather than overwritten
+      for (const method of METHODS) {
+        if (sourceRoutes.cache.has(method)) {
+          for (const [route, { handler }] of sourceRoutes.cache.get(method).entries()) {
+            const finalRoute = prefix ? (prefix + route).replace('//', '/') : route;
+            targetRoutes.add(method, finalRoute, handler, this);
+          }
+        }
+      }
+
+      // Merge Befores (Middleware)
+      for (const [route, handlers] of sourceRoutes.befores.entries()) {
+        const finalRoute = prefix ? (prefix + route).replace('//', '/') : route;
+
+        // We can't just set array, we must append
+        if (!targetRoutes.befores.has(finalRoute)) {
+          targetRoutes.befores.set(finalRoute, []);
+        }
+        targetRoutes.befores.get(finalRoute).push(...handlers);
+      }
+
+      // Merge Afters
+      for (const [route, handlers] of sourceRoutes.afters.entries()) {
+        const finalRoute = prefix ? (prefix + route).replace('//', '/') : route;
+
+        if (!targetRoutes.afters.has(finalRoute)) {
+          targetRoutes.afters.set(finalRoute, []);
+        }
+        targetRoutes.afters.get(finalRoute).push(...handlers);
+      }
+    }
+
+    // Merge Initializers (startup hooks)
+    if (router.initializers && router.initializers.length > 0) {
+      this.initializers.push(...router.initializers);
+    }
+
+    // Merge Deinitializers (shutdown hooks)
+    if (router.deinitializers && router.deinitializers.length > 0) {
+      this.deinitializers.push(...router.deinitializers);
     }
 
     return this;
+  }
+
+  /**
+   * Add middleware
+   * This is syntactic sugar for BEFORE(path, handler)
+   * We enforce explicit paths (e.g. '/*' for global) favoring "Explicit is better than implicit"
+   */
+  use(path, handler) {
+    if (typeof path !== 'string') {
+      throw new Error('Router.use() requires a path string as the first argument (e.g. "/*")');
+    }
+
+    if (typeof handler !== 'function') {
+      throw new Error('Router.use() requires a handler function as the second argument');
+    }
+
+    // Ensure path handles wildcards correctly matching BEFORE logic
+    if (!path.includes('*')) {
+      path = path.endsWith('/') ? `${path}*` : `${path}/*`;
+    }
+
+    return this.BEFORE(path, handler);
   }
 
   /**
@@ -364,18 +434,22 @@ export class Router {
     if (typeof event === 'function') {
       // If only one argument and it's a function, treat as startup
       this.initializers.push(event);
-    } else if (event === STARTUP) {
-      if (typeof handler !== 'function') {
-        throw new TypeError('Handler must be a function');
-      }
-      this.initializers.push(handler);
-    } else if (event === SHUTDOWN) {
-      if (typeof handler !== 'function') {
-        throw new TypeError('Handler must be a function');
-      }
-      this.deinitializers.push(handler);
     } else {
-      throw new Error('Event must be STARTUP or SHUTDOWN');
+      const normalizedEvent = String(event).toLowerCase();
+
+      if (normalizedEvent === STARTUP) {
+        if (typeof handler !== 'function') {
+          throw new TypeError('Handler must be a function');
+        }
+        this.initializers.push(handler);
+      } else if (normalizedEvent === SHUTDOWN) {
+        if (typeof handler !== 'function') {
+          throw new TypeError('Handler must be a function');
+        }
+        this.deinitializers.push(handler);
+      } else {
+        throw new Error('Event must be STARTUP or SHUTDOWN');
+      }
     }
     return this;
   }

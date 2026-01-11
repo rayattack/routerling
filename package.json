@@ -1,10 +1,13 @@
 {
   "name": "routerling",
-  "version": "0.0.2",
+  "version": "0.0.7",
   "description": "Routerling is a simple and fast router for Node.js",
-  "main": "index.js",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "scripts": {
-    "test": "node tests/test_comprehensive.js"
+    "test": "node --test tests/test_*.js"
   },
   "keywords": [
     "router",
@@ -16,6 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "cookie": "^1.1.1",
+    "dotenv": "^17.2.3",
     "formidable": "^3.5.4",
     "mime-types": "^3.0.2",
     "nunjucks": "^3.2.4",
